@@ -1,0 +1,10 @@
+*.jar
+*.zip
+.settings/
+bin/
+doc/
+logs/
+jarinjarloader/
+out/
+garbage-collection.*
+hs_err_pid21008.log

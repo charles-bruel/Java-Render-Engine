@@ -53,7 +53,7 @@ uniform int normal_debug_flag;//1 for true and false for everything else.
 
 //FUNCTION PROTOTYPES
 vec3 ambient();
-vec3 point(int index, vec3 view_dir, vec3 normal);
+vec3 point(int index, vec3 color, vec3 view_dir, vec3 normal);
 vec3 gz(vec3 vector);
 float shadow(vec3 frag_pos, int index, vec3 normal, vec3 light_dir);
 vec4 regular();
@@ -116,15 +116,15 @@ vec4 regular()
 	vec3 temp = vec3(0, 0, 0);
 	for(int i = 0;i < num_lights;i ++)
 	{
-		temp += point(i, view_dir, combined_normals);
+		temp += point(i, temp_color, view_dir, combined_normals);
 	}
 	
 	//COMBINED
-	vec3 result = (temp + ambient) * temp_color;
+	vec3 result = temp + ambient * temp_color;
 	return vec4(result, 1.0);
 }
 
-vec3 point(int index, vec3 view_dir, vec3 normal)
+vec3 point(int index, vec3 color, vec3 view_dir, vec3 normal)
 {
 	vec3 light_color = point_lights[index].light_color;
 	vec3 light_pos = point_lights[index].light_pos;
@@ -139,14 +139,16 @@ vec3 point(int index, vec3 view_dir, vec3 normal)
 	
 	//DIFFUSE
 	vec3 light_dir = normalize(light_pos - frag_pos);  
-	float diff = max(dot(light_dir, combined_normals), 0.0);
-	vec3 diffuse = diff * light_color;
+	float diff = max(dot(light_dir, normal), 0.0);
+	vec3 diffuse = diff * light_color * color;
 
 	//SPECULAR
-	vec3 halfway_dir = normalize(light_dir + view_dir);
-	float spec = pow(max(dot(view_dir, halfway_dir), 0.0), specular_power);
-	vec3 specular = vec3(texture(specular, tex_coords)) * spec * light_color * specular_strength;  
-
+    vec3 reflectDir = reflect(-light_dir, normal);
+    vec3 halfwayDir = normalize(light_dir + view_dir);  
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), specular_power);
+    
+    vec3 specular = vec3(specular_strength) * spec;
+    
 	return gz((diffuse + specular) * attenuation * (1.0 - shadow(frag_pos, index, normal, light_dir)));
 }
 
